@@ -1,0 +1,34 @@
+services:
+  # 로컬, 테스트 mysql
+  my-mysql:
+    image: mysql:8.0
+    container_name: mysql-hello-blog-v2-localhost
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+      - ./init-db:/docker-entrypoint-initdb.d
+    ports:
+      - 3306:3306
+
+  # 로컬 레디스
+  my-redis:
+    image: redis:7
+    container_name: redis-hello-blog-v2-localhost
+    ports:
+      - 6379:6379
+    volumes:
+      - ./redis-localhost-data:/data
+      - ./redis-localhost.conf:/usr/local/etc/redis/redis.conf
+    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
+
+  # 테스트 레디스
+  my-redis-testcase:
+    image: redis:7
+    container_name: redis-hello-blog-v2-testcase
+    ports:
+      - 6380:6379
+    volumes:
+      - ./redis-testcase-data:/data
+      - ./redis-testcase.conf:/usr/local/etc/redis/redis.conf
+    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
