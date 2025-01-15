@@ -5,6 +5,7 @@ CREATE TABLE post
     id          BIGINT       NOT NULL AUTO_INCREMENT,
     title       VARCHAR(255) NOT NULL UNIQUE,
     content     TEXT         NOT NULL,
+    thumb_url   TEXT,
     view_count  BIGINT DEFAULT 0,
     category_id BIGINT       NOT NULL,
     PRIMARY KEY (id),
