@@ -1,14 +1,17 @@
+# jpa 파라미터 값 노출
 logging:
   level:
     org.hibernate.orm.jdbc.bind: trace
 
 spring:
+  # mysql 테스트 db 연결
   datasource:
     url: jdbc:mysql://localhost:3306/hello_blog_v2_testcase
     username: root
     password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  # jpa 쿼리 출력
   jpa:
     show-sql: true
     properties:
@@ -17,6 +20,7 @@ spring:
     hibernate:
       ddl-auto: none
 
+  # db 마이그레이션
   flyway:
     baseline-on-migrate: true
     fail-on-missing-locations: true

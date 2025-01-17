@@ -1,5 +1,7 @@
 package corp.pjh.hello_blog_v2.category.domain;
 
+import corp.pjh.hello_blog_v2.common.util.TimeUtil;
+
 import jakarta.persistence.*;
 
 import lombok.Getter;
@@ -28,14 +30,16 @@ public class Category {
     private String thumbUrl;
 
     /**
-     * DEFAULT로 설정, insert * update 쿼리 X
-     * TIMESTAMP라 UTC로 저장 되는데, 일단 LocalDateTime으로 그대로 받고 DTO에서 한국 시간으로 변경하기!
+     * update 쿼리 X,
+     * 값 세팅할 때 UTC 시간을 양식만 LocalDateTime으로 바꿔서 세팅하기!!!
      */
-    @Column(name = "created_at",
-            nullable = true,
-            columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
-            insertable = false,
-            updatable = false)
+    @Column(name = "fixed_at", nullable = false, updatable = false)
+    private LocalDateTime fixedAt;
+
+    /**
+     * 값 세팅할 때 UTC 시간을 양식만 LocalDateTime으로 바꿔서 세팅하기!!!
+     */
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -54,22 +58,28 @@ public class Category {
             updatable = false)
     private Long parentIdForUnique;
 
-    /**
-     * 값을 직접 넣으면 안 되는 필드를 제외한 생성자
-     */
     public Category(String title, String thumbUrl, Category parent) {
         this.title = title;
         this.thumbUrl = thumbUrl;
+        this.fixedAt = TimeUtil.getLocalDateTimeFormatUTC();
+        this.createdAt = this.fixedAt;
         this.parent = parent;
-
         this.parentIdForUnique = parent == null ? -1 : parent.getId();
+
+        if (parent != null) {
+            parent.getChildren().add(this);
+        }
     }
 
     public void updateCategory(String title, String thumbUrl, Category parent) {
         this.title = title;
         this.thumbUrl = thumbUrl;
+        this.fixedAt = TimeUtil.getLocalDateTimeFormatUTC();
         this.parent = parent;
-
         this.parentIdForUnique = parent == null ? -1 : parent.getId();
+
+        if (parent != null) {
+            parent.getChildren().add(this);
+        }
     }
 }

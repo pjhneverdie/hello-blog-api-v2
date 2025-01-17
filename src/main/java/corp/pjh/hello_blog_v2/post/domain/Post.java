@@ -2,6 +2,7 @@ package corp.pjh.hello_blog_v2.post.domain;
 
 import corp.pjh.hello_blog_v2.category.domain.Category;
 
+import corp.pjh.hello_blog_v2.common.util.TimeUtil;
 import jakarta.persistence.*;
 
 import lombok.Getter;
@@ -30,43 +31,54 @@ public class Post {
     private String thumbUrl;
 
     /**
-     * DEFAULT로 설정, insert * update 쿼리 X
-     * TIMESTAMP라 UTC로 저장 되는데, 일단 LocalDateTime으로 그대로 받고 DTO에서 한국 시간으로 변경하기!
+     * update 쿼리 X,
+     * 값 세팅할 때 UTC 시간을 양식만 LocalDateTime으로 바꿔서 세팅하기!!!
      */
-    @Column(name = "created_at",
-            nullable = true,
-            columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
-            insertable = false,
-            updatable = false)
+    @Column(name = "fixed_at", nullable = false, updatable = false)
+    private LocalDateTime fixedAt;
+
+    /**
+     * 값 세팅할 때 UTC 시간을 양식만 LocalDateTime으로 바꿔서 세팅하기!!!
+     */
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     /**
-     * DEFAULT로 설정, insert쿼리 X
+     * DEFAULT로 설정, insert 쿼리 X
      */
     @Column(name = "view_count",
-            nullable = true,
+            nullable = false,
             insertable = false)
     private Long viewCount;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id")
+    @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
     public Post(String title, String content, String thumbUrl, Category category) {
         this.title = title;
         this.content = content;
         this.thumbUrl = thumbUrl;
+        this.fixedAt = TimeUtil.getLocalDateTimeFormatUTC();
+        this.createdAt = this.fixedAt;
+        this.viewCount = 0L;
         this.category = category;
     }
 
+    /**
+     * 조회수는 redis로 캐싱해서 가끔 한 번씩 따로 업데이트
+     */
     public void updateViewCount(Long viewCount) {
         this.viewCount = viewCount;
     }
 
-    public void updatePost(String title, String content, String thumbUrl, Category category) {
+    public void updatePost(String title, String content, String thumbUrl, Long viewCount, Category category) {
         this.title = title;
         this.content = content;
         this.thumbUrl = thumbUrl;
+        this.fixedAt = TimeUtil.getLocalDateTimeFormatUTC();
+        this.createdAt = this.fixedAt;
+        this.viewCount = viewCount;
         this.category = category;
     }
 }
