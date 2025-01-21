@@ -4,11 +4,14 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 
 public class TimeUtil {
+    private final static ZoneId utcZoneId = ZoneId.of("UTC");
+    private final static ZoneId seoulZoneId = ZoneId.of("Asia/Seoul");
+
     public static LocalDateTime getLocalDateTimeFormatUTC() {
-        return LocalDateTime.now(ZoneId.of("Asia/Seoul"))
-                .atZone(ZoneId.of("Asia/Seoul"))
+        return LocalDateTime.now(seoulZoneId)
+                .atZone(seoulZoneId)
                 .toInstant()
-                .atZone(ZoneId.of("UTC"))
+                .atZone(utcZoneId)
                 .toLocalDateTime();
     }
 }
