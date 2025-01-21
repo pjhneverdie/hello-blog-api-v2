@@ -1,27 +1,15 @@
-package corp.pjh.hello_blog_v2.common.validation;
+package corp.pjh.hello_blog_v2.common.web.custom_constraint;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Arrays;
+import java.util.List;
 
 public class FileTypeValidator implements ConstraintValidator<FileTypeConstraint, MultipartFile> {
-
-    private static final Set<String> ALLOWED_EXTENSIONS = new HashSet<>();
-
-    static {
-        ALLOWED_EXTENSIONS.add("png");
-        ALLOWED_EXTENSIONS.add("jpg");
-        ALLOWED_EXTENSIONS.add("jpeg");
-    }
-
-    @Override
-    public void initialize(FileTypeConstraint constraintAnnotation) {
-        ConstraintValidator.super.initialize(constraintAnnotation);
-    }
+    private final List<String> ALLOWED_EXTENSIONS = Arrays.asList("png", "jpg", "jpeg");
 
     @Override
     public boolean isValid(MultipartFile file, ConstraintValidatorContext constraintValidatorContext) {

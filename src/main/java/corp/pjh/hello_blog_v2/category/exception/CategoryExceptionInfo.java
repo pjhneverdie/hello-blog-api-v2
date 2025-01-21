@@ -8,7 +8,7 @@ import org.springframework.http.HttpStatusCode;
 
 @RequiredArgsConstructor
 public enum CategoryExceptionInfo implements ExceptionInfo {
-    EX1("EX1", "message", HttpStatusCode.valueOf(500));
+    THUMBNAIL_UPLOAD_FAILED("THUMBNAIL_UPLOAD_FAILED", "썸네일 업로드 중 오류가 발생했습니다.", HttpStatusCode.valueOf(500));
 
     @Override
     public String codeName() {

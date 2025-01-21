@@ -1,14 +1,31 @@
+# jpa 파라미터 값 노출
 logging:
   level:
     org.hibernate.orm.jdbc.bind: trace
 
+# aws credentials
+aws:
+  region-name: ap-northeast-2
+  access-key-id: ${AWS_HELLO_BLOG_TEST_USER_ACCESS_KEY_ID}
+  secret-access-key: ${AWS_HELLO_BLOG_TEST_USER_SECRET_ACCESS_KEY}
+  s3:
+    bucket-name: hello-blog-test-bucket
+
+# redis config
+redis:
+  host: localhost
+  port: 6379
+  password: 123456
+
 spring:
+  # mysql 로컬 db 연결
   datasource:
     url: jdbc:mysql://localhost:3306/hello_blog_v2_localhost
     username: root
     password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  # jpa 쿼리 출력
   jpa:
     show-sql: true
     properties:
@@ -17,6 +34,7 @@ spring:
     hibernate:
       ddl-auto: none
 
+  # db 마이그레이션
   flyway:
     baseline-on-migrate: true
     fail-on-missing-locations: true

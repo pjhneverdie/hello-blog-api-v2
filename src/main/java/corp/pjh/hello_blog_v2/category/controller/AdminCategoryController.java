@@ -4,7 +4,7 @@ import corp.pjh.hello_blog_v2.category.dto.CreateCategoryForm;
 import corp.pjh.hello_blog_v2.category.dto.CreateCategoryRequest;
 import corp.pjh.hello_blog_v2.category.service.CategoryService;
 import corp.pjh.hello_blog_v2.common.dto.ApiResponse;
-import corp.pjh.hello_blog_v2.common.validation.FileTypeConstraint;
+import corp.pjh.hello_blog_v2.common.web.custom_constraint.FileTypeConstraint;
 
 import jakarta.validation.Valid;
 
@@ -26,12 +26,11 @@ public class AdminCategoryController {
     public ResponseEntity<ApiResponse<Void>> createCategory(
             @Valid @RequestPart CreateCategoryForm createCategoryForm,
             @FileTypeConstraint @RequestPart(required = false) MultipartFile thumbImageFile
-    ) {
-        CreateCategoryRequest createCategoryRequest = new CreateCategoryRequest(createCategoryForm.getTitle(), thumbImageFile, createCategoryForm.getParent_id());
+    )  {
+        CreateCategoryRequest createCategoryRequest = new CreateCategoryRequest(createCategoryForm.getTitle(), createCategoryForm.getThumbUrl(), thumbImageFile, createCategoryForm.getParentId());
 
         categoryService.createCategory(createCategoryRequest);
 
         return ResponseEntity.ok(ApiResponse.successVoidResponse());
     }
-
 }

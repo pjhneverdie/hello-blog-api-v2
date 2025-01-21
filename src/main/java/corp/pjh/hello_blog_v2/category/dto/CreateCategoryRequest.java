@@ -10,7 +10,9 @@ import org.springframework.web.multipart.MultipartFile;
 public class CreateCategoryRequest {
     private final String title;
 
-    private MultipartFile multipartFile;
+    private final String thumbUrl;
 
-    private Long parent_id;
+    private final MultipartFile thumbImageFile;
+
+    private final Long parentId;
 }

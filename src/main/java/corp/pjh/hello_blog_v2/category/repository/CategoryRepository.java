@@ -19,7 +19,7 @@ public class CategoryRepository {
         em.persist(category);
     }
 
-    public Optional<Category> findById(Long id) {
+    public Optional<Category> findById(long id) {
         return Optional.ofNullable(em.find(Category.class, id));
     }
 }
