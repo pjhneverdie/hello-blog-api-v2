@@ -28,7 +28,7 @@ class CategoryRepositoryTest {
     CategoryRepository categoryRepository;
 
     @Test
-    void 연관관계_편의_메서드_불필요_테스트() {
+    void 연관관계_편의_메서드_테스트() {
         // Given
         Category category1 = new Category("category1_제목", "썸네일 주소", null);
 
@@ -70,7 +70,7 @@ class CategoryRepositoryTest {
     }
 
     @Test
-    void 카테고리_저장_테스트() {
+    void 카테고리_생성_테스트() {
         // Given
         Category category = new Category("제목", "썸네일 주소", null);
 
@@ -87,7 +87,7 @@ class CategoryRepositoryTest {
      * 같은 레벨에서 카테고리 제목은 중복될 수 없음
      */
     @Test
-    void 카테고리_저장_실패_테스트() {
+    void 카테고리_생성_실패_테스트() {
         // Given
         Category category1 = new Category("제목", "썸네일 주소", null);
         Category category2 = new Category("제목", "썸네일 주소", null);
@@ -96,7 +96,7 @@ class CategoryRepositoryTest {
 
         // When, Then
         /**
-         * ?? 왜 이건 ConstraintViolationException이 아닌지 모르겠음
+         * save는 @Repository 어노테이션에 영향을 받아서 예외를 DataAccessException으로 감싸서 던짐
          */
         assertThrows(DataIntegrityViolationException.class, () -> categoryRepository.save(category2));
     }
@@ -149,6 +149,9 @@ class CategoryRepositoryTest {
         category3.updateCategory("category1_제목", "썸네일 주소", null);
 
         // Then
+        /**
+         * flush는 @Repository 어노테이션에 영향을 받지 않으니 하이버네이트 예외가 DataAccessException으로 바뀌지 않음
+         */
         assertThrows(ConstraintViolationException.class, () -> em.flush());
     }
 

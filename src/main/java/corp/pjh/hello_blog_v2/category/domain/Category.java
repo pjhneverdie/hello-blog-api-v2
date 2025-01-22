@@ -1,5 +1,6 @@
 package corp.pjh.hello_blog_v2.category.domain;
 
+import corp.pjh.hello_blog_v2.common.domain.EntityWithTime;
 import corp.pjh.hello_blog_v2.common.util.TimeUtil;
 
 import jakarta.persistence.*;
@@ -7,7 +8,6 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,7 +17,7 @@ import java.util.List;
 })
 @NoArgsConstructor
 @Getter
-public class Category {
+public class Category extends EntityWithTime {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -28,19 +28,6 @@ public class Category {
     @Lob
     @Column(name = "thumb_url", nullable = false)
     private String thumbUrl;
-
-    /**
-     * update 쿼리 X,
-     * 값 세팅할 때 UTC 시간을 양식만 LocalDateTime으로 바꿔서 세팅하기!!!
-     */
-    @Column(name = "fixed_at", nullable = false, updatable = false)
-    private LocalDateTime fixedAt;
-
-    /**
-     * 값 세팅할 때 UTC 시간을 양식만 LocalDateTime으로 바꿔서 세팅하기!!!
-     */
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
@@ -59,10 +46,10 @@ public class Category {
     private Long parentIdForUnique;
 
     public Category(String title, String thumbUrl, Category parent) {
+        super(TimeUtil.getLocalDateTimeFormatUTC());
+
         this.title = title;
         this.thumbUrl = thumbUrl;
-        this.fixedAt = TimeUtil.getLocalDateTimeFormatUTC();
-        this.createdAt = this.fixedAt;
         this.parent = parent;
         this.parentIdForUnique = parent == null ? -1 : parent.getId();
 
@@ -72,9 +59,27 @@ public class Category {
     }
 
     public void updateCategory(String title, String thumbUrl, Category parent) {
+        super.updateFixedAt(TimeUtil.getLocalDateTimeFormatUTC());
+
         this.title = title;
         this.thumbUrl = thumbUrl;
-        this.fixedAt = TimeUtil.getLocalDateTimeFormatUTC();
+        this.parent = parent;
+        this.parentIdForUnique = parent == null ? -1 : parent.getId();
+
+        if (parent != null) {
+            parent.getChildren().add(this);
+        }
+    }
+
+    /**
+     * 테스트용!!! 테스트에서만 사용
+     */
+    public Category(Long id, String title, String thumbUrl, Category parent) {
+        super(TimeUtil.getLocalDateTimeFormatUTC());
+
+        this.id = id;
+        this.title = title;
+        this.thumbUrl = thumbUrl;
         this.parent = parent;
         this.parentIdForUnique = parent == null ? -1 : parent.getId();
 
