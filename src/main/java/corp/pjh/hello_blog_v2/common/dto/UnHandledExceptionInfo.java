@@ -4,7 +4,7 @@ import org.springframework.http.HttpStatusCode;
 
 public class UnHandledExceptionInfo extends GlobalExceptionInfo {
     @Override
-    public String codeName() {
+    public String errorId() {
         return "INTERNAL_SERVER_ERROR";
     }
 

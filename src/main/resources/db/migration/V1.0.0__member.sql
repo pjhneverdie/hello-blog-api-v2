@@ -7,3 +7,6 @@ CREATE TABLE member
     password VARCHAR(255) NOT NULL,
     PRIMARY KEY (id)
 );
+
+INSERT INTO member (email, password)
+VALUES ('${email}', '${password}');

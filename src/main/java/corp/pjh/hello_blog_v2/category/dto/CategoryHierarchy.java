@@ -3,20 +3,23 @@ package corp.pjh.hello_blog_v2.category.dto;
 import corp.pjh.hello_blog_v2.category.domain.Category;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Getter
+@NoArgsConstructor
 public class CategoryHierarchy {
-    private final long id;
-    private final String title;
-    private final String thumbUrl;
-    private final LocalDateTime fixedAt;
-    private final LocalDateTime createdAt;
-    private final Long parentId;
-    private final List<CategoryHierarchy> children;
+    private Long id;
+    private String title;
+    private String thumbUrl;
+    private LocalDateTime fixedAt;
+    private LocalDateTime createdAt;
+    private Long parentId;
+    private List<CategoryHierarchy> children = new ArrayList<>();
 
     public CategoryHierarchy(Category category) {
         this.id = category.getId();
@@ -24,7 +27,10 @@ public class CategoryHierarchy {
         this.thumbUrl = category.getThumbUrl();
         this.fixedAt = category.getFixedAt();
         this.createdAt = category.getCreatedAt();
-        this.parentId = category.getParent() == null ? null : category.getParent().getId();
-        this.children = new ArrayList<>();
+        this.parentId = Optional.ofNullable(category.getParent()).map(Category::getId).orElse(null);
+
+        for (Category child : category.getChildren()) {
+            this.children.add(new CategoryHierarchy(child));
+        }
     }
 }

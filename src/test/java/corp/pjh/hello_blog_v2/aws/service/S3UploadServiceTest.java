@@ -20,22 +20,28 @@ public class S3UploadServiceTest {
 
     @Test
     void 파일_단건_업로드_및_삭제_테스트() throws IOException {
-        String fileName = "test-file.txt";
-        String fileContent = "This is a test file for S3 upload.";
-        String contentType = "text/plain";
+        // Given
+        MultipartFile multipartFile = createMultipartFile(
+                "test-file.txt",
+                "This is a test file for S3 upload.",
+                "text/plain"
+        );
 
-        MultipartFile multipartFile = createMultipartFile(fileName, fileContent, contentType);
-        String key = "test-folder/" + fileName + "-" + TimeUtil.getLocalDateTimeFormatUTC();
+        String key = "test-folder/" + TimeUtil.getUTCLocalDatetime() + "." + multipartFile.getContentType().split("/")[1];
 
+        // When
+        // 업로드가 잘 되는지 확인
         String uploadedUrl = s3UploadService.putFile(multipartFile, key);
 
-        assertNotNull(uploadedUrl);
-        assertEquals(s3UploadService.extractKeyFromUrl(uploadedUrl), key);
+        // Then
+        // url에서 제대로 key를 추출할 수 있는지 확인
+        assertEquals(key, s3UploadService.extractKeyFromUrl(uploadedUrl));
+
 
         s3UploadService.deleteFile(s3UploadService.extractKeyFromUrl(uploadedUrl));
     }
 
-    public static MultipartFile createMultipartFile(String fileName, String fileContent, String contentType) throws IOException {
+    public static MultipartFile createMultipartFile(String fileName, String fileContent, String contentType) {
         return new MockMultipartFile(
                 fileName,
                 fileName,

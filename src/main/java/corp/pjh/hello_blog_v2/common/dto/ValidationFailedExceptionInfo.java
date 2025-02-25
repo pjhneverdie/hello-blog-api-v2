@@ -9,7 +9,7 @@ public class ValidationFailedExceptionInfo extends GlobalExceptionInfo {
     private final String errorMessage;
 
     @Override
-    public String codeName() {
+    public String errorId() {
         return "VALIDATION_FAILED";
     }
 

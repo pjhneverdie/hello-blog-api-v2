@@ -42,7 +42,7 @@ public class Post extends EntityWithTime {
     private Category category;
 
     public Post(String title, String content, String thumbUrl, Category category) {
-        super(TimeUtil.getLocalDateTimeFormatUTC());
+        super(TimeUtil.getUTCLocalDatetime());
 
         this.title = title;
         this.content = content;
@@ -56,7 +56,7 @@ public class Post extends EntityWithTime {
     }
 
     public void updatePost(String title, String content, String thumbUrl, Long viewCount, Category category) {
-        super.updateFixedAt(TimeUtil.getLocalDateTimeFormatUTC());
+        super.updateFixedAt(TimeUtil.getUTCLocalDatetime());
 
         this.title = title;
         this.content = content;

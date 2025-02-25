@@ -12,9 +12,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Getter
 public class EntityWithTime {
-    /**
-     * 값 세팅할 때 UTC 시간을 양식만 LocalDateTime으로 바꿔서 세팅하기!!!
-     */
     @Column(name = "fixed_at", nullable = false)
     private LocalDateTime fixedAt;
 

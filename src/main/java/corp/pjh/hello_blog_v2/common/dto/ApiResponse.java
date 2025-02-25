@@ -24,6 +24,6 @@ public class ApiResponse<T> {
     }
 
     public static <T> ApiResponse<T> failedResponse(ExceptionInfo exceptionInfo) {
-        return new ApiResponse<T>(exceptionInfo.codeName(), exceptionInfo.errorMessage(), null);
+        return new ApiResponse<T>(exceptionInfo.errorId(), exceptionInfo.errorMessage(), null);
     }
 }

@@ -1,4 +1,4 @@
-package corp.pjh.hello_blog_v2.common.web.custom_constraint;
+package corp.pjh.hello_blog_v2.common.web.validation;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;

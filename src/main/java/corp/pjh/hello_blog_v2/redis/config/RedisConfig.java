@@ -10,6 +10,10 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+/**
+ * test 폴더에 따로 RedisTestConfig 있음
+ */
+@Profile("!testcase")
 @Configuration
 public class RedisConfig {
     private final String host;
@@ -25,7 +29,6 @@ public class RedisConfig {
         this.password = password;
     }
 
-    @Profile("!testcase")
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(host, port);
@@ -34,30 +37,10 @@ public class RedisConfig {
         return new LettuceConnectionFactory(config);
     }
 
-    @Profile("testcase")
-    @Bean
-    public RedisConnectionFactory redisConnectionFactoryTestCase() {
-        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(host, port);
-        config.setPassword(password);
-
-        return new LettuceConnectionFactory(config);
-    }
-
-    @Profile("!testcase")
     @Bean
     public RedisTemplate<String, String> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<String, String> template = new RedisTemplate<>();
         template.setConnectionFactory(redisConnectionFactory);
-        template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new StringRedisSerializer());
-        return template;
-    }
-
-    @Profile("testcase")
-    @Bean
-    public RedisTemplate<String, String> redisTemplateTestCase(RedisConnectionFactory redisConnectionFactoryTestCase) {
-        RedisTemplate<String, String> template = new RedisTemplate<>();
-        template.setConnectionFactory(redisConnectionFactoryTestCase);
         template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(new StringRedisSerializer());
         return template;

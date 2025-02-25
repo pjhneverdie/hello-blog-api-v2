@@ -1,12 +1,14 @@
 package corp.pjh.hello_blog_v2.category.controller;
 
-import corp.pjh.hello_blog_v2.category.dto.CreateCategoryForm;
-import corp.pjh.hello_blog_v2.category.dto.CreateCategoryRequest;
+import corp.pjh.hello_blog_v2.category.dto.*;
 import corp.pjh.hello_blog_v2.category.service.CategoryService;
 import corp.pjh.hello_blog_v2.common.dto.ApiResponse;
-import corp.pjh.hello_blog_v2.common.web.custom_constraint.FileTypeConstraint;
+import corp.pjh.hello_blog_v2.common.dto.CustomException;
+import corp.pjh.hello_blog_v2.common.dto.ValidationFailedExceptionInfo;
+import corp.pjh.hello_blog_v2.common.web.validation.FileTypeConstraint;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,14 +24,48 @@ import org.springframework.web.multipart.MultipartFile;
 public class AdminCategoryController {
     private final CategoryService categoryService;
 
-    @PostMapping("/create")
-    public ResponseEntity<ApiResponse<Void>> createCategory(
+    @PostMapping
+    public ResponseEntity<ApiResponse<CategoryResponse>> create(
             @Valid @RequestPart CreateCategoryForm createCategoryForm,
             @FileTypeConstraint @RequestPart(required = false) MultipartFile thumbImageFile
-    )  {
-        CreateCategoryRequest createCategoryRequest = new CreateCategoryRequest(createCategoryForm.getTitle(), createCategoryForm.getThumbUrl(), thumbImageFile, createCategoryForm.getParentId());
+    ) {
+        if (createCategoryForm.getThumbUrl() == null && thumbImageFile == null)
+            throw new CustomException(new ValidationFailedExceptionInfo("썸네일을 설정해 주세요."));
 
-        categoryService.createCategory(createCategoryRequest);
+        CreateCategoryRequest createCategoryRequest =
+                new CreateCategoryRequest(
+                        createCategoryForm.getTitle(),
+                        createCategoryForm.getThumbUrl(),
+                        thumbImageFile,
+                        createCategoryForm.getParentId()
+                );
+
+        return ResponseEntity.ok(ApiResponse.successResponse(categoryService.create(createCategoryRequest)));
+    }
+
+    @PutMapping
+    public ResponseEntity<ApiResponse<CategoryResponse>> update(
+            @Valid @RequestPart UpdateCategoryForm updateCategoryForm,
+            @FileTypeConstraint @RequestPart(required = false) MultipartFile thumbImageFile
+    ) {
+        if (updateCategoryForm.getThumbUrl() == null && thumbImageFile == null)
+            throw new CustomException(new ValidationFailedExceptionInfo("썸네일을 설정해 주세요."));
+
+        UpdateCategoryRequest updateCategoryRequest =
+                new UpdateCategoryRequest(
+                        updateCategoryForm.getId(),
+                        updateCategoryForm.getTitle(),
+                        updateCategoryForm.getThumbUrl(),
+                        thumbImageFile,
+                        updateCategoryForm.getParentId()
+                );
+
+        return ResponseEntity.ok(ApiResponse.successResponse(categoryService.update(updateCategoryRequest)));
+    }
+
+    @DeleteMapping
+    public ResponseEntity<ApiResponse<Void>> delete(@NotNull @RequestParam Long id) {
+        categoryService.delete(id);
 
         return ResponseEntity.ok(ApiResponse.successVoidResponse());
     }

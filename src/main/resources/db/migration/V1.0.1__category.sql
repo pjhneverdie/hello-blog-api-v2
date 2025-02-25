@@ -1,16 +1,13 @@
 -- 카테고리 테이블 생성 --
--- * GENERATED COLUMN은 직접 INSERT 쿼리를 날리면 안 됨!!--
 
 CREATE TABLE category
 (
-    id                   BIGINT       NOT NULL AUTO_INCREMENT,
-    title                VARCHAR(255) NOT NULL,
-    thumb_url            TEXT,
-    fixed_at             DATETIME     NOT NULL,
-    created_at           DATETIME     NOT NULL,
-    parent_id            BIGINT,
-    parent_id_for_unique BIGINT GENERATED ALWAYS AS (COALESCE(parent_id, -1)) STORED,
+    id         BIGINT       NOT NULL AUTO_INCREMENT,
+    title      VARCHAR(255) NOT NULL,
+    thumb_url  TEXT,
+    fixed_at   DATETIME     NOT NULL,
+    created_at DATETIME     NOT NULL,
+    parent_id  BIGINT,
     PRIMARY KEY (id),
-    FOREIGN KEY (parent_id) REFERENCES category (id) ON DELETE RESTRICT,
-    CONSTRAINT title_parent_id UNIQUE (title, parent_id_for_unique)
+    FOREIGN KEY (parent_id) REFERENCES category (id) ON DELETE RESTRICT
 );

@@ -1,18 +1,15 @@
 package corp.pjh.hello_blog_v2.category.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import corp.pjh.hello_blog_v2.category.domain.Category;
-import corp.pjh.hello_blog_v2.category.dto.CategoryHierarchy;
 import corp.pjh.hello_blog_v2.category.dto.CategoryResponse;
 import corp.pjh.hello_blog_v2.category.dto.CreateCategoryRequest;
+import corp.pjh.hello_blog_v2.category.dto.UpdateCategoryRequest;
 import corp.pjh.hello_blog_v2.category.exception.CategoryExceptionInfo;
 import corp.pjh.hello_blog_v2.category.repository.CategoryRepository;
 import corp.pjh.hello_blog_v2.aws.service.S3UploadService;
+import corp.pjh.hello_blog_v2.blog.config.BlogConfig;
 import corp.pjh.hello_blog_v2.common.dto.CustomException;
-import corp.pjh.hello_blog_v2.common.util.TimeUtil;
 
-import corp.pjh.hello_blog_v2.redis.service.CacheService;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
@@ -20,93 +17,126 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 @Transactional
 @Service
 @RequiredArgsConstructor
 public class CategoryService {
-    private final ObjectMapper objectMapper;
-    private final CacheService cacheService;
+    private final BlogConfig blogConfig;
     private final S3UploadService s3UploadService;
     private final CategoryRepository categoryRepository;
+    private final CategoryCacheService categoryCacheService;
+    private final CategoryValidationService categoryValidationService;
 
-    public CategoryResponse createCategory(CreateCategoryRequest createCategoryRequest) {
+    public CategoryResponse create(CreateCategoryRequest createCategoryRequest) {
         String title = createCategoryRequest.getTitle();
 
-        Category parent = Optional
-                .ofNullable(createCategoryRequest.getParentId())
+        Category parent = Optional.ofNullable(createCategoryRequest.getParentId())
                 .flatMap(categoryRepository::findById)
                 .orElse(null);
 
+        if (parent == null) {
+            categoryValidationService.checkSameAsCompanyTitle(title); // 부모가 없다 == 최상위 레벨에서의 카테고리명 중복 검사
+        } else {
+            // 부모 자식 간 카테고리명 중복 검사
+            categoryValidationService.checkSameAsParentTitle(parent, title);
+
+            categoryValidationService.checkSameAsCompanyTitle(parent, title); // 같은 레벨에서의 카테고리명 중복 검사
+        }
+
         String thumbUrl = Optional
                 .ofNullable(createCategoryRequest.getThumbUrl())
-                .orElseGet(() -> {
-                    MultipartFile thumbImageFile = createCategoryRequest.getThumbImageFile();
-                    String key = S3UploadService.DEFAULT_UPLOAD_PATH + thumbImageFile.getOriginalFilename() + "-" + TimeUtil.getLocalDateTimeFormatUTC();
-
-                    try {
-                        return s3UploadService.putFile(thumbImageFile, key);
-                    } catch (IOException e) {
-                        throw new CustomException(CategoryExceptionInfo.THUMBNAIL_UPLOAD_FAILED);
-                    }
-                });
+                .orElseGet(() -> uploadThumbImageFile(createCategoryRequest.getThumbImageFile()));
 
         Category category = new Category(
                 title,
                 thumbUrl,
                 parent
-        ); // 카테고리 생성
-
-        categoryRepository.save(category); // 카테고리 저장
-
-        cacheCategory(category); // 카테고리 캐싱
-
-        return new CategoryResponse(
-                category.getId(),
-                category.getTitle(),
-                category.getThumbUrl(),
-                category.getFixedAt(),
-                category.getCreatedAt(),
-                createCategoryRequest.getParentId()
         );
+
+        categoryRepository.save(category);
+
+        categoryCacheService.save(category);
+
+        return new CategoryResponse(category);
     }
 
-    private void cacheCategory(Category category) {
-        String jsonHierarchies = cacheService.get("hierarchies");
+    public String getHierarchies() {
+        return categoryCacheService.lookAsideJsonHierarchies().getData();
+    }
 
-        try {
-            List<CategoryHierarchy> objectHierarchies = Optional.ofNullable(objectMapper.readValue(jsonHierarchies, new TypeReference<List<CategoryHierarchy>>() {
-            })).orElse(new ArrayList<>());
+    public CategoryResponse update(UpdateCategoryRequest updateCategoryRequest) {
+        Category origin = categoryRepository.findById(updateCategoryRequest.getId()).orElseThrow();
+        String originThumbUrl = origin.getThumbUrl();
 
-            /**
-             * 부모 카테고리가 없다 == 최상위 카테고리, 첫 번째 깊이에 추가하면 끝!
-             */
-            if (category.getParent() == null) {
-                objectHierarchies.add(new CategoryHierarchy(category));
-            } else {
-                /**
-                 * 부모 카테고리가 있다 == 하위 카테고리, DFS로 부모 찾아서 그 밑에 추가하면 끝!
-                 */
-                CategoryHierarchy parentLocation = findParentLocation(category.getParent().getId(), objectHierarchies);
+        String updatedTitle = updateCategoryRequest.getTitle();
 
-                parentLocation.getChildren().add(new CategoryHierarchy(category));
+        String updatedThumbUrl = Optional
+                .ofNullable(updateCategoryRequest.getThumbUrl())
+                .orElseGet(() -> uploadThumbImageFile(updateCategoryRequest.getThumbImageFile()));
+
+        Category updatedParent = Optional
+                .ofNullable(updateCategoryRequest.getParentId())
+                .flatMap(categoryRepository::findById)
+                .orElse(null);
+
+        if (updatedParent == null) {
+            if (updateCategoryRequest.getParentId() != null) {
+                throw new CustomException(CategoryExceptionInfo.NO_SUCH_PARENT);
             }
 
-            cacheService.set("hierarchies", objectMapper.writeValueAsString(objectHierarchies));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+            if (!origin.getTitle().equals(updatedTitle)) {
+                categoryValidationService.checkSameAsCompanyTitle(updatedTitle); // 부모가 없다 == 최상위 레벨에서의 카테고리명 중복 검사
+            }
+        } else {
+            if (!origin.getTitle().equals(updatedTitle)) {
+                // 부모 자식 간 카테고리명 중복 검사
+                categoryValidationService.checkSameAsParentTitle(updatedParent, updatedTitle);
+
+                categoryValidationService.checkSameAsCompanyTitle(updatedParent, updatedTitle); // 같은 레벨에서의 카테고리명 중복 검사
+            }
+
+            categoryValidationService.checkInValidHierarchy(updatedParent.getId(), origin.getId()); // 계층 구조 안전 검사
+        }
+
+        origin.updateCategory(
+                updatedTitle,
+                updatedThumbUrl,
+                updatedParent
+        );
+
+        deleteThumbImageFile(originThumbUrl); // 기존 썸네일 삭제!
+
+        categoryCacheService.update(origin);
+
+        return new CategoryResponse(origin);
+    }
+
+    public void delete(long id) {
+        Category category = categoryRepository.findById(id).orElseThrow();
+
+        categoryValidationService.checkChildrenExist(id);
+
+        categoryRepository.delete(category);
+        categoryCacheService.delete(category);
+        deleteThumbImageFile(category.getThumbUrl());
+    }
+
+    private String uploadThumbImageFile(MultipartFile thumbImageFile) {
+        try {
+            return s3UploadService.putFile(thumbImageFile, s3UploadService.createKey(thumbImageFile));
+        } catch (IOException e) {
+            throw new CustomException(CategoryExceptionInfo.THUMBNAIL_UPLOAD_FAILED);
         }
     }
 
-    private CategoryHierarchy findParentLocation(long parentId, List<CategoryHierarchy> objectHierarchies) {
-        for (CategoryHierarchy objectHierarchy : objectHierarchies) {
-            if (parentId == objectHierarchy.getId()) {
-                return objectHierarchy;
-            } else {
-                findParentLocation(parentId, objectHierarchy.getChildren());
+    private void deleteThumbImageFile(String originThumbUrl) {
+        if (!blogConfig.getDefaultThumbUrls().contains(originThumbUrl)) {
+            try {
+                s3UploadService.deleteFile(s3UploadService.extractKeyFromUrl(originThumbUrl));
+            } catch (IOException e) {
+                throw new CustomException(CategoryExceptionInfo.THUMBNAIL_DELETE_FAILED);
             }
         }
     }

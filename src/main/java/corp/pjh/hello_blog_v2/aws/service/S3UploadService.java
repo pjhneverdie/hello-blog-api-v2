@@ -3,6 +3,7 @@ package corp.pjh.hello_blog_v2.aws.service;
 import corp.pjh.hello_blog_v2.aws.config.AwsConfig;
 import corp.pjh.hello_blog_v2.aws.exception.S3ExceptionInfo;
 import corp.pjh.hello_blog_v2.common.dto.CustomException;
+import corp.pjh.hello_blog_v2.common.util.TimeUtil;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,8 +29,8 @@ public class S3UploadService {
     private final S3Client s3Client;
     private final S3Utilities s3Utilities;
 
-    public static final String DEFAULT_UPLOAD_PATH = "/";
-    public static final String TEMP_UPLOAD_PATH = "temp/";
+    private static final String TEMP_UPLOAD_PATH = "temp/";
+    private static final String DEFAULT_UPLOAD_PATH = "main/";
 
     public S3UploadService(AwsConfig awsConfig, String bucketName, S3Client s3Client, S3Utilities s3Utilities) {
         this.region = Region.of(awsConfig.getRegionName());
@@ -43,6 +44,7 @@ public class S3UploadService {
                 .builder()
                 .bucket(bucketName)
                 .key(key)
+                .contentType(multipartFile.getContentType())
                 .build();
 
         s3Client.putObject(
@@ -70,13 +72,13 @@ public class S3UploadService {
         s3Client.deleteObject(deleteObjectRequest);
     }
 
+    public String createKey(MultipartFile multipartFile) {
+        return DEFAULT_UPLOAD_PATH + TimeUtil.getUTCLocalDatetime() + "." + multipartFile.getContentType().split("/")[1];
+    }
+
     public String extractKeyFromUrl(String url) {
         try {
-            String path = new URL(url).getPath();
-
-            path = path.substring(1);
-
-            return URLDecoder.decode(path, StandardCharsets.UTF_8);
+            return URLDecoder.decode(new URL(url).getPath().substring(1), StandardCharsets.UTF_8);
         } catch (MalformedURLException e) {
             throw new CustomException(S3ExceptionInfo.KEY_EXTRACTION_FAILED);
         }

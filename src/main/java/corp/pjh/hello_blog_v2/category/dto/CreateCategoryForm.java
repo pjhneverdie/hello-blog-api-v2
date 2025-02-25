@@ -1,7 +1,5 @@
 package corp.pjh.hello_blog_v2.category.dto;
 
-import corp.pjh.hello_blog_v2.common.web.custom_constraint.ThumbUrlConstraint;
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -18,7 +16,6 @@ public class CreateCategoryForm {
     @Length(min = 1, max = 255, message = "제목은 1자 이상 255자 이하로 입력해 주세요.")
     private final String title;
 
-    @ThumbUrlConstraint
     private final String thumbUrl;
 
     private final Long parentId;

@@ -7,7 +7,7 @@ public class TimeUtil {
     private final static ZoneId utcZoneId = ZoneId.of("UTC");
     private final static ZoneId seoulZoneId = ZoneId.of("Asia/Seoul");
 
-    public static LocalDateTime getLocalDateTimeFormatUTC() {
+    public static LocalDateTime getUTCLocalDatetime() {
         return LocalDateTime.now(seoulZoneId)
                 .atZone(seoulZoneId)
                 .toInstant()
